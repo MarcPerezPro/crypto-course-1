@@ -4,12 +4,12 @@
 ?? ?? ?? ??
 57 45 42 50
 
-Google WebP image file, where ?? ?? ?? ?? is the file size.
+Google WebP image file, where ?? ?? ?? ?? is the file size - 8 bits.
 
 # Actual bytes at offset 0:
 0000000 25 76 30 7b 11 91 51 61 07 17 70 1e
 
-We are going to calculate the ASCII key by XORing the magic bytes with the actual bytes.
+We are going to calculate the key by XORing the magic bytes with the actual bytes.
 
 # Possible XOR for 1st block (ACTUAL^POSSIBLE)=KEY:
 
@@ -25,15 +25,22 @@ w?v=
 
 # Possible XOR for 2nd block:
 
-0x11 ^ 0xe2 = 0xF3
+```bash
+ls -l basic4.webp
+printf '%x\n' 57956-8
+```
 
-0x91 ^ 0x64 = 0xF5
+Size is e25c but we have to reverse the order and pad with zeros, so 0x5C 0xE2 0x00 0x00
+
+0x11 ^ 0x5C = M
+
+0x91 ^ 0xE2 = s
 
 0x51 ^ 0x00 = Q
 
 0x61 ^ 0x00 = a
 
-0xF3 0xF5 Qa
+MsQa
 
 # Possible XOR for 3rd block:
 
@@ -46,3 +53,7 @@ w?v=
 0x1e ^ P = N
 
 PR2N
+
+# Full key
+
+w?v=MsQaPR2N
