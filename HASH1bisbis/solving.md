@@ -1,6 +1,6 @@
 # Password
 
-__Tr1koul__
+__6933879259__
 
 # Method
 
@@ -13,5 +13,5 @@ john --format=raw-md5 --incremental:Digits hash
 # Verification
 
 ```bash
-echo -n Tr1koul | md5
+echo -n 6933879259 | md5
 ```
