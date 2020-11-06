@@ -54,6 +54,18 @@ MsQa
 
 PR2N
 
+# Last bytes of the key
+This time we have to get lucky and exploit the fact that x ^ 0 = 0
+So we'll pray to get some null padding in the image
+```bash
+strings basic4.webp | grep 2N
+```
+gave me a potential j so I ran
+```bash
+strings basic4.webp | grep Nj
+```
+and it gave us __jP8__ !
+
 # Full key
 
-w?v=MsQaPR2N
+w?v=MsQaPR2NjP8
