@@ -6,4 +6,3 @@ Here's the hash: 37f62f1363b04df4370753037853fe88
 | cracking method           | hash                             | type | result  |
 | ------------------------- | -------------------------------- | ---- | ------- |
 | https://crackstation.net/ | 37f62f1363b04df4370753037853fe88 | md5  | trololo |
-|                           |                                  |      |         |
