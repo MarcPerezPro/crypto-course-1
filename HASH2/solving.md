@@ -7,7 +7,7 @@ __Tr1koul__
 Use john-jumbo:
 
 ```bash
-john --format=raw-md5 --incremental:Digits hash
+john --format=raw-md5 hash
 ```
 
 # Verification
