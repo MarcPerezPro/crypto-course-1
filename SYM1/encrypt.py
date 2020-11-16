@@ -2,12 +2,15 @@
 
 import hashlib
 
+from tqdm.contrib.concurrent import process_map
 from numba.misc.special import prange
 from Cryptodome.Cipher import AES
 from numba import jit
 import binascii
 from tqdm import tqdm
-from tqdm.contrib.itertools import product
+from itertools import product
+from multiprocessing import RLock
+
 
 PLAINTEXT = "I was lost, but now I'm found...".encode()
 assert len(PLAINTEXT) == 32
@@ -20,8 +23,9 @@ cipher = AES.new(KEY, AES.MODE_CBC, iv)
 
 ciphertext = cipher.encrypt(PLAINTEXT)
 
-print('cipher text:')
-print(binascii.hexlify(ciphertext))
+if __name__ == '__main__':
+    print('cipher text:')
+    print(binascii.hexlify(ciphertext))
 
 ENCODED = bytes([
     # Unknown
@@ -33,8 +37,10 @@ ENCODED = bytes([
 ])
 assert len(ENCODED) % 16 == 0
 assert len(ENCODED) == 32
-print('ENCODED (with holes):')
-print(binascii.hexlify(ENCODED))
+
+if __name__ == '__main__':
+    print('ENCODED (with holes):')
+    print(binascii.hexlify(ENCODED))
 
 
 @jit(nopython=True)
@@ -70,18 +76,32 @@ ecbCipher = AES.new(KEY, AES.MODE_ECB)
 byte_range = [bytes([x]) for x in range(0xff + 1)]
 # ENCODED[10] finishes with a B
 byte_range_10 = [bytes([x * 0x10 + 0xB]) for x in range(0xF + 1)]
-for (encoded_0, encoded_8, encoded_9, encoded_10) in product(byte_range, byte_range, byte_range, byte_range_10):
-    bruteforced_encoded = encoded_0 + ENCODED[1:8] + \
-        encoded_8 + encoded_9 + encoded_10 + ENCODED[11:]
-    decryptedText = ecbCipher.decrypt(bruteforced_encoded)
-    foundIV = bytearray(byte_xor(PLAINTEXT, decryptedText))
 
-    # Let's cipher it with the foundIV and to check if we get the original encoded string
-    new_cipher_text = encrypt_with_cbc_cipher(foundIV[:16])
-    if (check_against_encoded_cipher(new_cipher_text)):
-        print('new_cipher_text:')
-        print(binascii.hexlify(new_cipher_text))
-        print('encoded (bruteforced):')
-        print(binascii.hexlify(bruteforced_encoded))
-        print("IV:")
-        print(foundIV[:16])
+
+def bruteforce_encoded_bytes(encoded_0: bytes):
+    for (encoded_8, encoded_9, encoded_10) in product(byte_range, byte_range, byte_range_10):
+        bruteforced_encoded = encoded_0 + ENCODED[1:8] + \
+            encoded_8 + encoded_9 + encoded_10 + ENCODED[11:]
+        decrypted_text = ecbCipher.decrypt(bruteforced_encoded)
+        found_iv = bytearray(byte_xor(PLAINTEXT, decrypted_text))[:16]
+
+        # Let's cipher it with the foundIV and to check if we get the original encoded string
+        new_cipher_text = encrypt_with_cbc_cipher(found_iv)
+        if (check_against_encoded_cipher(new_cipher_text)):
+            return ({
+                'new_cipher_text': new_cipher_text,
+                'bruteforced_encoded': bruteforced_encoded,
+                'found_iv': found_iv
+            })
+            # print('new_cipher_text:')
+            # print(binascii.hexlify(new_cipher_text))
+            # print('encoded (bruteforced):')
+            # print(binascii.hexlify(bruteforced_encoded))
+            # print("IV:")
+            # print(foundIV[:16])
+
+
+if __name__ == '__main__':
+    tqdm.set_lock(RLock())
+    results = process_map(bruteforce_encoded_bytes, byte_range)
+    print(results)
