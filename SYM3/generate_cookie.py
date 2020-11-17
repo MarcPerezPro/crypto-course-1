@@ -23,12 +23,13 @@ originalCookieData = base64.b64decode(originalCookie)[16:]
 originalPlainText = "{'password': '', 'username': '', 'admin': 0}"
 # We can only manipulate the first block, so admin has to go first
 # Should be 16  "################"
-newFirstBlock = "{'admin':1,     "
+newFirstBlock = "{'admin': 1,    "
 assert len(
-    newFirstBlock) <= 16, f"newFirstBlock invalid length: {len(newFirstBlock)}"
+    newFirstBlock) == 16, f"newFirstBlock invalid length: {len(newFirstBlock)}"
 
 expectedCookieData = newFirstBlock + originalPlainText[len(newFirstBlock):]
 print(f"Expected cookie data: {expectedCookieData}")
+# Disable this if you want to try weird stuff
 assert is_json(expectedCookieData.replace("'", '"'))
 
 
