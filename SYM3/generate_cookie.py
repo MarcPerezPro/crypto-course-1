@@ -5,41 +5,21 @@ import base64
 import json
 from bs4 import BeautifulSoup
 
-
-def is_json(myjson):
-    try:
-        json_object = json.loads(myjson)
-    except ValueError as e:
-        print(myjson)
-        print(e)
-        return False
-    return True
-
-
 # URL: https://noflag-2.crypto.blackfoot.io/
-originalCookie = "q09Iqdiu3besuxfdBiXssIBk6QKKJ6iDIg+1kA7tbD6rcrzWelLPJGl5VfNMd///1zJM46D8eB7FOn/Vl+dfJQ=="
+originalCookie = "1MesXUfznEMYFaa9L8WQB7KuLRpyxa8Czae1cheXa6aD/RdOjYiupdpXPseP57ve3WFvk/dYn+cBSVUVw0ghcyRU7zEUxRWvpVCoJ2Qy07s="
 originalIV = base64.b64decode(originalCookie)[:16]
 originalCookieData = base64.b64decode(originalCookie)[16:]
-originalPlainText = "{'password': '', 'username': '', 'admin': 0}"
-# We can only manipulate the first block, so admin has to go first
-# Should be 16  "################"
-newFirstBlock = "{'admin': 1,    "
-assert len(
-    newFirstBlock) == 16, f"newFirstBlock invalid length: {len(newFirstBlock)}"
+# 16 bytes blocks:   1111111111111111222222222222222233333333333333334444444444444444
+originalPlainText = "{'password': 'aa', 'username': 'aaaaaaaaaaaaaaaa', 'admin': 0}"
+adminBooleanOffset = originalPlainText.find('0')
+# We want to flip that 0 at offset adminBooleanOffset to a 1
+# So basically to flip originalPlainText[adminBooleanOffset] we have to flip originalCookieData[adminBooleanOffset - 16]
+# This will destroy the 3rd block, but switch a byte in the 4th block
 
-expectedCookieData = newFirstBlock + originalPlainText[len(newFirstBlock):]
-print(f"Expected cookie data: {expectedCookieData}")
-# Disable this if you want to try weird stuff
-assert is_json(expectedCookieData.replace("'", '"'))
+newCookieData = bytearray(originalCookieData)
+newCookieData[adminBooleanOffset - 16] += 1
 
-
-decrypt = [a ^ ord(b) for (a, b) in zip(originalIV, originalPlainText)]
-newIV = bytes([a ^ ord(b) for (a, b) in zip(decrypt, newFirstBlock)])
-assert originalIV != newIV
-print(f'new IV: {newIV}')
-assert len(newIV) == 16, f"newIV invalid length: {len(newIV)}"
-
-newCookie = str(base64.b64encode(newIV + originalCookieData), "utf-8")
+newCookie = str(base64.b64encode(originalIV + newCookieData), "utf-8")
 print(f'patched cookie:\t{newCookie}')
 
 
