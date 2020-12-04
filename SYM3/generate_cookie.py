@@ -5,8 +5,45 @@ import base64
 import json
 from bs4 import BeautifulSoup
 
+
+def generate_original_cookie():
+    session = requests.Session()
+
+    headers = {
+        'authority': 'noflag-2.crypto.blackfoot.io',
+        'cache-control': 'max-age=0',
+        'origin': 'https://noflag-2.crypto.blackfoot.io',
+        'upgrade-insecure-requests': '1',
+        'dnt': '1',
+        'content-type': 'application/x-www-form-urlencoded',
+        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_1_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4343.0 Safari/537.36',
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+        'sec-fetch-site': 'same-origin',
+        'sec-fetch-mode': 'navigate',
+        'sec-fetch-user': '?1',
+        'sec-fetch-dest': 'document',
+        'referer': 'https://noflag-2.crypto.blackfoot.io/',
+        'accept-language': 'en-US,en;q=0.9,fr-FR;q=0.8,fr;q=0.7',
+    }
+
+    data = {
+        'user': 'aaaaaaaaaaaaaaaa',
+        'password': 'aa'
+    }
+
+    session.post(
+        'https://noflag-2.crypto.blackfoot.io/login', headers=headers, data=data)
+
+    cookie = session.cookies.get('cookie')
+
+    print(f'original cookie:\t{cookie}')
+
+    return cookie
+
+
 # URL: https://noflag-2.crypto.blackfoot.io/
-originalCookie = "1MesXUfznEMYFaa9L8WQB7KuLRpyxa8Czae1cheXa6aD/RdOjYiupdpXPseP57ve3WFvk/dYn+cBSVUVw0ghcyRU7zEUxRWvpVCoJ2Qy07s="
+# originalCookie = "1MesXUfznEMYFaa9L8WQB7KuLRpyxa8Czae1cheXa6aD/RdOjYiupdpXPseP57ve3WFvk/dYn+cBSVUVw0ghcyRU7zEUxRWvpVCoJ2Qy07s="
+originalCookie = generate_original_cookie()
 originalIV = base64.b64decode(originalCookie)[:16]
 originalCookieData = base64.b64decode(originalCookie)[16:]
 # 16 bytes blocks:   1111111111111111222222222222222233333333333333334444444444444444
@@ -20,7 +57,7 @@ newCookieData = bytearray(originalCookieData)
 newCookieData[adminBooleanOffset - 16] += 1
 
 newCookie = str(base64.b64encode(originalIV + newCookieData), "utf-8")
-print(f'patched cookie:\t{newCookie}')
+print(f'patched cookie:\t\t{newCookie}')
 
 
 def test_cookie(cookie):
